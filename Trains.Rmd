@@ -1,0 +1,68 @@
+---
+title: "class-03-10-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gov.1005.data)
+library(tidyverse)
+library(infer)
+```
+
+With your partner start poking around in the "trains" dataset. What do you notice?
+
+```{r train, echo=FALSE}
+train <- gov.1005.data::train
+glimpse(train)
+summary(train)
+```
+The train table looks at data from individuals on a train platform and who may overhear others speaking spanish.
+The treatment column refers to the conditions of the participants. Treated means they were on the platform and individuals spoke spanish next to them. Control means that no one was in their vicinity. 
+
+The att_ columns measure attitude at the start and end of the experiment, with low numbers indivicating liberal attitudes towards immigrants and and high numbers more conservative attitudes.
+
+What is the average income for the treatment group?
+```{r income, echo=FALSE}
+train %>%
+  filter(treatment == "Treated") %>%
+summarise(avg_inc = mean(income))
+```
+How certain are we that that is the mean for the entire Boston population, given that there are only 51 people in this sample? We need a confidence interval for the mean income of treated commutes.
+
+First we want the average income of multiple sampling replicates
+```{r conf_int, echo=FALSE}
+conf_int <- train %>%
+  filter(treatment == "Treated") %>%
+  rep_sample_n(size = 51, replace = TRUE, reps = 1000) %>%
+  group_by(replicate) %>%
+  summarize(avg_inc = mean(income))
+```
+
+Then we can take the confidence interval from these replicates
+```{r 95, echo=FALSE}
+conf_int %>%
+  pull(avg_inc) %>%
+  quantile(c(0.025, 0.975))
+```
+What does this mean? 
+
+Last Monologue from class :'(
+Feedback is Wonderful!
+Message received on typos and CAs preparedness.
+We are working on study halls as this call moves forward
+
+Back to code!
+I'm interested in the mean income for the treated and control, and the difference between the two.
+```{r difference, echo=FALSE}
+difference <- train %>%
+  group_by(treatment) %>%
+  summarize(avg_inc = mean(income)) %>%
+  pivot_wider(1:2, names_from = treatment, values_from = avg_inc) %>%
+  mutate(difference = Control - Treated)
+```
+
+Talk with your partner about what you think a bad scenario is for COVID-19, and what is a good scenario.
+Bad scenario - What if we all have it but it's dormant so we spread it by all traveling home.
+Good scenario - It's a seasonal virus so it gets extinguishes itself in the heat. 
+What might you plausibly do when you go home to make the world a better place?
